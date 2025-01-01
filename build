@@ -5,12 +5,9 @@
 # you can also run './build all' or simply './build' to build all the projects
 # if you want to clean the projects, you can run './build clean'
 # if you want to remove the 'build' dirs, you can run './build deepclean'
-# The script prompts you about missing dependencies, press 'y' to install them
 
-# Set to 1 to skip the dependency checks.
-# Automatically gets set to 1 after a successful run to not waste your time
-# If you are having issues with dependencies, try setting this to 0 as a first measure
-skip_dep_checks=1
+# The script prompts you about missing dependencies.
+# You will still have to install them with your package manager.
 
 odir="$(pwd)"
 opt="${1:-all}"
@@ -42,33 +39,17 @@ function do_build() {
 	cd ../..
 }
 
-function dep() {
-	# debian specific, you can change apt and apt-get to be
-	apt list --installed "$1" 2>&1 | grep "$1" > /dev/null
-	if [[ $? != 0 ]]; then
-		printf "\n====================\nYou do not have $1 installed.\n"
-		inp=""
-		read -a inp -n 1 -p "Install it (runs apt--press \"y\"): "
-		if [[ $inp == "y" ]]; then
-			printf "\n"
-			[[ $inp != "" ]] && printf "\n"
-			sudo apt-get -y install "$1"	|| fail "Failed to install $1\n"
-		else
-			[[ $inp != "" ]] && printf "\n"
-			fail "Failed due to missing dependency.\n"
-		fi
-	fi
-}
-
-
-if [[ $skip_dep_checks != 1 ]]; then
-	dep "libglfw3-dev"
-	dep "libglm-dev"
-	dep "libglew-dev"
-	dep "libdevil-dev"
-	pt1='s/skip_dep'
-	pt2='_checks=0/skip_dep_checks=1/g'
-	cat build | sed -i "$pt1$pt2" build
+if [ ! -d "/usr/include/glm" ]; then
+  fail "Library GLM not present.\nInstall with 'apt-get install libglm-dev', \n'pacman -S glm', or your system equivalent.\nIf your install is not in /usr (i.e. local install),\nthen you will have to edit the CMakeList.txt files.\n"
+fi
+if [ ! -f "/usr/include/GLFW/glfw3.h" ]; then
+  fail "Library glfw3 not present.\nInstall with 'apt-get install libglfw3-dev', \n'pacman -S glfw', or your system equivalent.\nIf your install is not in /usr (i.e. local install),\nthen you will have to edit the CMakeList.txt files.\n"
+fi
+if [ ! -f "/usr/include/GL/eglew.h" ]; then
+  fail "Library glew not present.\nInstall with 'apt-get install libglew-dev', \n'pacman -S glew', or your system equivalent.\nIf your install is not in /usr (i.e. local install),\nthen you will have to edit the CMakeList.txt files.\n"
+fi
+if [ ! -f "/usr/lib/libIL.so" ]; then
+  fail "Library devil (libIL.so) not present.\nInstall with 'apt-get install libdevil-dev', \n'pacman -S devil', or your system equivalent.\nIf your install is not in /usr (i.e. local install),\nthen you will have to edit the CMakeList.txt files.\n"
 fi
 
 # get to the root directory
